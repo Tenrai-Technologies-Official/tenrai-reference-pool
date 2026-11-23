@@ -73,7 +73,7 @@ impl Profile {
         (1usize << self.dataset_log2_bytes) / 4
     }
 
-    /// Mask of the 1 KiB dataset items a round picks from.
+    /// Mask for an index into the 1 KiB dataset items.
     pub const fn item_mask(&self) -> u32 {
         ((1usize << self.dataset_log2_bytes) / (ITEM_WORDS * 4) - 1) as u32
     }
@@ -159,7 +159,7 @@ pub(crate) fn keccakf(a: &mut [u64; 25]) {
         0x0000_0000_8000_0001,
         0x8000_0000_8000_8008,
     ];
-    // rho offsets along the pi walk that starts at lane 1
+    // Rho offsets in Pi traversal order, starting at lane 1.
     const RHO: [u32; 24] = [
         1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 2, 14, 27, 41, 56, 8, 25, 43, 62, 18, 39, 61, 20, 44,
     ];
@@ -216,7 +216,7 @@ fn left_encode(x: u64) -> Vec<u8> {
 }
 
 impl Xof {
-    /// SHAKE256 with a tag in front of the data.
+    /// SHAKE256 over the tag followed by the message.
     pub(crate) fn new(tag: &[u8]) -> Self {
         let mut s = Xof {
             a: [0; 25],
@@ -308,13 +308,13 @@ const FINAL_TAG: &[u8] = b"TENRAI/TENQ/FINAL";
 static LANE_PREFIX: std::sync::OnceLock<Xof> = std::sync::OnceLock::new();
 static FINAL_PREFIX: std::sync::OnceLock<Xof> = std::sync::OnceLock::new();
 
-/// Keccak states after cSHAKE256's constant first block: lane digests, then the final value.
+/// Precomputed cSHAKE256 prefix states for the lane digests and work value.
 pub fn cshake_prefix_states() -> [[u64; 25]; 2] {
     [Xof::cshake(b"", LANE_TAG).a, Xof::cshake(b"", FINAL_TAG).a]
 }
 
-/// The attempt seed's SHAKE256 state after two blocks, and the padded third block. GPUs XOR the
-/// counter into bytes 6..14 of it.
+/// SHAKE256 state after two blocks and the padded third block.
+/// GPUs XOR the counter into bytes 6..14 of that block.
 pub fn attempt_midstate(pre: &[u8; POW_PREIMAGE_BYTES]) -> ([u64; 25], [u64; 17]) {
     let mut stream = [0u8; 342];
     stream[..ATTEMPT_TAG.len()].copy_from_slice(ATTEMPT_TAG);
@@ -335,7 +335,7 @@ pub fn attempt_midstate(pre: &[u8; POW_PREIMAGE_BYTES]) -> ([u64; 25], [u64; 17]
     (mid, last)
 }
 
-/// cSHAKE256 of one lane's number and its 32 scratchpad words: one permutation after the prefix block.
+/// Hash the lane index and 32 scratchpad words with the lane cSHAKE256 prefix.
 fn lane_digest(lane: u32, words: &[u32]) -> [u8; 32] {
     let mut s = LANE_PREFIX
         .get_or_init(|| Xof::cshake(b"", LANE_TAG))
@@ -386,7 +386,7 @@ pub(crate) fn zeroed_words(words: usize) -> Option<Vec<u32>> {
     Some(buffer)
 }
 
-/// Sequential cache: row i mixes row i-1 with two earlier rows picked by row i-1.
+/// After the seed row, mix the preceding row with the two earlier rows it selects.
 pub fn make_cache(profile_id: u32, chain: &[u8; 48], epoch: u32) -> Option<Vec<u32>> {
     let p = profile(profile_id)?;
     let eseed = epoch_seed(profile_id, chain, epoch)?;
@@ -418,8 +418,8 @@ pub fn make_cache(profile_id: u32, chain: &[u8; 48], epoch: u32) -> Option<Vec<u
     Some(c)
 }
 
-/// Start of one of the node's two chains; each chain reads half of the node's rows. The link holds
-/// the next row in its low bits and the block rotation in its top three bits.
+/// Initialize one of the node's two chains. The link's low bits select the next row.
+/// The top three bits select the block rotation.
 fn node_start(eseed: &[u8; 64], index: u32, chain: usize) -> ([u32; 32], u32) {
     let sa = le64(&eseed[0..8]);
     let sb = le64(&eseed[8..16]);
@@ -437,14 +437,13 @@ fn node_start(eseed: &[u8; 64], index: u32, chain: usize) -> ([u32; 32], u32) {
     (acc, mix32(index ^ salt))
 }
 
-/// Asks for a row early; only speed, never values.
 #[inline(always)]
 fn prefetch_row(cache: &[u32], j: u32) {
     #[cfg(target_arch = "x86_64")]
     {
         use core::arch::x86_64::{_MM_HINT_T0, _mm_prefetch};
         let row = &cache[j as usize * 32..j as usize * 32 + 32];
-        // SAFETY: both addresses lie inside `row`; a prefetch never faults.
+        // SAFETY: both prefetch addresses are within the row.
         unsafe {
             _mm_prefetch::<_MM_HINT_T0>(row.as_ptr().cast::<i8>());
             _mm_prefetch::<_MM_HINT_T0>(row.as_ptr().add(16).cast::<i8>());
@@ -460,8 +459,7 @@ fn cache_row(cache: &[u32], j: u32) -> &[u32; 32] {
     cache[base..base + 32].try_into().unwrap()
 }
 
-/// One read step: add the row with its 16-byte blocks shifted by the link's top bits, then rotate.
-/// The shift forces a word-sliced SRAM to move whole rows.
+/// Shift the row by the link's block offset before adding and rotating its words.
 #[inline(always)]
 fn node_step(acc: &mut [u32; 32], row: &[u32; 32], t: u32, link: u32) -> u32 {
     let rot = 1 + (t.wrapping_mul(7) % 31);
@@ -517,7 +515,7 @@ pub(crate) fn dataset_node_reads(
     node_finish(&acc, eseed, index, out);
 }
 
-/// All 16 chains of an item's eight nodes in lockstep, so their cache misses overlap.
+/// Advance all 16 chains together to overlap cache misses.
 pub(crate) fn item_reads(
     cache: &[u32],
     eseed: &[u8; 64],
@@ -555,12 +553,12 @@ pub(crate) fn item_reads(
     }
 }
 
-/// Dataset node `index` from the cache; `cache` must be the profile's.
+/// Derive a node from the matching profile's cache.
 pub fn dataset_node(p: &Profile, cache: &[u32], eseed: &[u8; 64], index: u32, out: &mut [u32; 32]) {
     dataset_node_reads(cache, eseed, index, p.node_reads, out);
 }
 
-/// The eight nodes of item `item`, for about the cost of one.
+/// Derive the eight nodes of an item with interleaved cache reads.
 pub fn dataset_item(
     p: &Profile,
     cache: &[u32],
@@ -707,8 +705,7 @@ where
     State { seed, r, scratch }
 }
 
-/// The work value: cSHAKE256 over the seed, the profile, every register in lane order and the 32 lane
-/// digests of the scratchpad, all of fixed length.
+/// Hash the seed, profile, lane-ordered registers and 32 scratchpad digests with cSHAKE256.
 pub(crate) fn finish(profile_id: u32, st: &State) -> [u8; 32] {
     let mut f = FINAL_PREFIX
         .get_or_init(|| Xof::cshake(b"", FINAL_TAG))
@@ -751,7 +748,7 @@ pub fn evaluate(profile_id: u32, pre: &[u8; 323], eseed: &[u8; 64], d: &[u32]) -
     })
 }
 
-/// `evaluate` with the dataset in parts, as wasm32 cannot hold 2 GiB in one slice: `fetch` copies a node.
+/// Fetch one node at a time so wasm32 can use a 2 GiB dataset split across slices.
 pub fn evaluate_nodes<F>(
     profile_id: u32,
     pre: &[u8; 323],
