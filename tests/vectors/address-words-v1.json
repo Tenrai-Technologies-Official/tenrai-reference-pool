@@ -1,0 +1,113 @@
+{
+  "cases": [
+    {
+      "address": "trai1qyqh6sszds5zmd86z6sgmtklh3drys0dwcrarwmdsn7vyj9rt7stm4p0rdxrx90kyqdqgq9cs9",
+      "digest": "fabc297aac45edb18786ae856167c4353d9f9294c50458cafd9ed968bbe069be1bc78e74a44063f676a0ec9b6d0e74aa",
+      "indices": [
+        2005,
+        1802,
+        757,
+        708,
+        758,
+        1734
+      ],
+      "name": "key-mainnet",
+      "network": "mainnet",
+      "words": "windmill talc frosty fjord frothy sorghum"
+    },
+    {
+      "address": "ttrai1qyqh6sszds5zmd86z6sgmtklh3drys0dwcrarwmdsn7vyj9rt7stm4p0rdxrx90kyqdqk4j48z",
+      "digest": "230013743b9b1639af8d51bd07adea88bc7c74d76220135cf3875f1733aba292f76a900b5001cb5a72581dccf494c009",
+      "indices": [
+        280,
+        4,
+        1768,
+        953,
+        1419,
+        230
+      ],
+      "name": "key-testnet",
+      "network": "testnet",
+      "words": "bulkhead abode stork icepack pedestal bobtail"
+    },
+    {
+      "address": "dtrai1qyqh6sszds5zmd86z6sgmtklh3drys0dwcrarwmdsn7vyj9rt7stm4p0rdxrx90kyqdq73ej42",
+      "digest": "22f2ed14025618ae5352172b74c9a3e023cdfd2aa114321375bc9082eadf67d3c4d005e051c0d32c27e756fc878ef818",
+      "indices": [
+        279,
+        1211,
+        552,
+        37,
+        780,
+        697
+      ],
+      "name": "key-development",
+      "network": "development",
+      "words": "builder meerkat diving alder gateway fiesta"
+    },
+    {
+      "address": "trai1qyqn0gm2wjxlsqk85qp39datncc7ev74w343vvpjjdr2jxd0n2c6eygcmfdmyu7qsz3s8280pd",
+      "digest": "84a0fb2108bc16afe330e63c4c3c5d6beb9cc5ce4da4a83d8b50d890bdfd8c9dacdbbfd6af042cd950b4c829fff75af0",
+      "indices": [
+        1061,
+        62,
+        1602,
+        139,
+        1547,
+        703
+      ],
+      "name": "other-key-mainnet",
+      "network": "mainnet",
+      "words": "knothole amiss rouge axolotl rattle filly"
+    },
+    {
+      "address": "trai1qyqsqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqhhus7s",
+      "digest": "f6fc713ecf2fec59b449e683929ee76d48562e240cd0a7c674dcbd9fe122b95a8aa20c67389a3319a27becfdbc89515f",
+      "indices": [
+        1975,
+        1820,
+        637,
+        1266,
+        2038,
+        358
+      ],
+      "name": "zero-commitment",
+      "network": "mainnet",
+      "words": "wardrobe teapot emblem murmur zigzag chard"
+    },
+    {
+      "address": "dtrai1qyqllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllsz2h0pm",
+      "digest": "a0fb6cd6cb5b77230242d6f3af13ff96b346bfed1822db7f00d2a8b24019e04d62baeceffcfa28d26a11cc97f151326f",
+      "indices": [
+        1287,
+        1755,
+        429,
+        1205,
+        1467,
+        1164
+      ],
+      "name": "full-commitment",
+      "network": "development",
+      "words": "nestling stairway cookie mauve plucky lychee"
+    },
+    {
+      "address": "ttrai1qypz8qu2d7waaz35mf8d24g6wejzfmmvylpy3q6n3grck00tv9v9ezqv6mtq8r0uv78srmnfhz",
+      "digest": "9d9587a8cc236177432c2c3d9434c6f76324973b0df95d9cfdb10d4e8f4e5db15a4bce4a638f085acdc2048787fb2a33",
+      "indices": [
+        1260,
+        1377,
+        1873,
+        1218,
+        432,
+        1501
+      ],
+      "name": "threshold-2-of-3",
+      "network": "testnet",
+      "words": "mudflat outfit treatise mermaid copybook prelude"
+    }
+  ],
+  "scheme": "TRAI_ADDRESS_WORDS_V1",
+  "version": 1,
+  "word_count": 6,
+  "word_list_sha256": "55149311582c84d0baafbbbb98ad8329e5c365fba3be78ccb2aaf180a4ddc344"
+}
